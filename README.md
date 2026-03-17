@@ -125,3 +125,14 @@ gcloud dataproc batches submit spark \
     --subnet=$SUBNET \
     -- $BUCKET_API
 ```
+
+## Cleaning Up Persistent Lineage
+
+Dataplex Data Lineage stores events natively within its API, meaning old processes will survive a standard `terraform destroy`.
+
+If you are redeploying the POC and want a completely clean slate without "ghost" executions, execute the included cleanup script. It will forcefully iterate through the Dataplex REST API and recursively purge all lingering Process, Run, and Event definitions:
+
+```bash
+export PROJECT_ID="<YOUR_PROJECT_ID_HERE>"
+python3 clean_lineage.py
+```
