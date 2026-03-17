@@ -21,11 +21,11 @@ Before running the pipelines, export your target infrastructure settings:
 export PROJECT_ID="<YOUR_PROJECT_ID_HERE>"
 export REGION="<YOUR_REGION_HERE>"
 export SUBNET="<YOUR_SUBNET_HERE>"
-export BUCKET_MAIN="<YOUR_MAIN_BUCKET_HERE>"
-export BUCKET_BQ="<YOUR_BQ_BUCKET_HERE>"
-export BUCKET_DISCOVERY="<YOUR_DISCOVERY_BUCKET_HERE>"
-export BUCKET_API="<YOUR_API_BUCKET_HERE>"
-export BUCKET_NAT="<YOUR_NATIVE_BUCKET_HERE>"
+export BUCKET_MAIN="${PROJECT_ID}-wpp_lineage_poc"
+export BUCKET_BQ="${PROJECT_ID}-wpp_lineage_poc_bq_external"
+export BUCKET_DISCOVERY="${PROJECT_ID}-wpp_lineage_poc_auto_discovery"
+export BUCKET_API="${PROJECT_ID}-wpp_lineage_poc_lineage_api"
+export BUCKET_NAT="${PROJECT_ID}-wpp_lineage_poc_bq_native"
 ```
 
 ## Compiling the Spark Job
