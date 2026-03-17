@@ -86,7 +86,7 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
-    --batch=lineage-direct-gcs \
+    --batch=lineage-direct-gcs-$RANDOM \
     --class=com.demo.lineage.Pipeline1DirectGcsRead \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
@@ -97,7 +97,7 @@ gcloud dataproc batches submit spark \
 gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
-    --batch=lineage-biglake-connector \
+    --batch=lineage-biglake-connector-$RANDOM \
     --class=com.demo.lineage.Pipeline2BQNativePath \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
@@ -108,7 +108,7 @@ gcloud dataproc batches submit spark \
 gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
-    --batch=lineage-native-dataplex \
+    --batch=lineage-native-dataplex-$RANDOM \
     --class=com.demo.lineage.Pipeline3NativeDataplex \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
@@ -119,7 +119,7 @@ gcloud dataproc batches submit spark \
 gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
-    --batch=lineage-custom-api \
+    --batch=lineage-custom-api-$RANDOM \
     --class=com.demo.lineage.Pipeline4CustomLineage \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
