@@ -1,4 +1,4 @@
-package com.wpp.lineage
+package com.demo.lineage
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
@@ -11,7 +11,7 @@ object Pipeline4CustomLineage {
     }
 
     val bucketApiLineage = args(0)
-    val projectId = sys.env.getOrElse("GOOGLE_CLOUD_PROJECT", "YOUR_PROJECT_ID")
+    val projectId = sys.env.getOrElse("GOOGLE_CLOUD_PROJECT", "wf-prod-466816")
     val location = "us-east1"
 
     // 1. Define Paths
@@ -136,7 +136,7 @@ object Pipeline4CustomLineage {
     val processEndpoint = s"https://datalineage.googleapis.com/v1/projects/$projectId/locations/$location/processes"
     
     // 2. Ensure Dataplex Entries Exist
-    val entryGroup = "wpp-lineage-poc-lineage-api-group"
+    val entryGroup = "demo-lineage-poc-lineage-api-group"
     val entriesEndpoint = s"https://dataplex.googleapis.com/v1/projects/$projectId/locations/$location/entryGroups/$entryGroup/entries"
     
     def ensureEntryExists(entryId: String, gcsPath: String, displayName: String): Unit = {
@@ -151,12 +151,12 @@ object Pipeline4CustomLineage {
         val cleanPath = if (gcsPath.endsWith("/")) gcsPath.substring(0, gcsPath.length - 1) else gcsPath
         // Format to //storage.googleapis.com
         val systemResource = cleanPath.replace("gs://", "//storage.googleapis.com/")
-        // Format to custom:wpp_lineage_poc.source
+        // Format to custom:demo_lineage_poc.source
         val customId = cleanPath.replace("gs://", "").replace("/", ".")
-        val gcsFqn = s"custom:wpp_lineage_poc.$customId"
+        val gcsFqn = s"custom:demo_lineage_poc.$customId"
         
         val payload = s"""{
-          |  "entryType": "projects/$projectId/locations/$location/entryTypes/wpp-lineage-poc-custom-type",
+          |  "entryType": "projects/$projectId/locations/$location/entryTypes/demo-lineage-poc-custom-type",
           |  "fullyQualifiedName": "$gcsFqn",
           |  "entrySource": {
           |    "resource": "$systemResource",
@@ -164,8 +164,8 @@ object Pipeline4CustomLineage {
           |    "displayName": "$displayName"
           |  },
           |  "aspects": {
-          |    "$projectId.$location.wpp-lineage-poc-custom-aspect": {
-          |      "aspectType": "projects/$projectId/locations/$location/aspectTypes/wpp-lineage-poc-custom-aspect",
+          |    "$projectId.$location.demo-lineage-poc-custom-aspect": {
+          |      "aspectType": "projects/$projectId/locations/$location/aspectTypes/demo-lineage-poc-custom-aspect",
           |      "data": {
           |        "format": "parquet",
           |        "framework": "TYDA",
@@ -225,8 +225,8 @@ object Pipeline4CustomLineage {
     val sourceCustomId = cleanSourceGcs.replace("gs://", "").replace("/", ".")
     val destCustomId = cleanDestGcs.replace("gs://", "").replace("/", ".")
     
-    val sourceFqn = s"custom:wpp_lineage_poc.$sourceCustomId"
-    val destFqn = s"custom:wpp_lineage_poc.$destCustomId"
+    val sourceFqn = s"custom:demo_lineage_poc.$sourceCustomId"
+    val destFqn = s"custom:demo_lineage_poc.$destCustomId"
     
     val lineageEventEndpoint = s"https://datalineage.googleapis.com/v1/$runName/lineageEvents"
     val lineageEventPayload = s"""{

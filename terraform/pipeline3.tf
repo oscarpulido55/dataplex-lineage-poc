@@ -1,12 +1,12 @@
 resource "google_dataplex_lake" "lineage_poc_lake" {
-  name        = "wpp-lineage-auto-discovery-lake"
+  name        = "demo-lineage-auto-discovery-lake"
   project     = var.project_id
   location    = var.region
   description = "Dataplex Lake for Lineage POC"
 }
 
 resource "google_dataplex_zone" "lineage_poc_zone" {
-  name     = "wpp-lineage-poc-auto-discovery-zone"
+  name     = "demo-lineage-poc-auto-discovery-zone"
   lake     = google_dataplex_lake.lineage_poc_lake.name
   project  = var.project_id
   location = var.region

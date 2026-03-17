@@ -13,25 +13,25 @@ variable "region" {
 # The suffixes of the buckets to create (these will be prefixed with project_id in buckets.tf)
 variable "bucket_main_suffix" {
   type    = string
-  default = "wpp_lineage_poc"
+  default = "demo_lineage_poc"
 }
 
 variable "bucket_bq_external_suffix" {
   type    = string
-  default = "wpp_lineage_poc_bq_external"
+  default = "demo_lineage_poc_bq_external"
 }
 
 variable "bucket_auto_discovery_suffix" {
   type    = string
-  default = "wpp_lineage_poc_auto_discovery"
+  default = "demo_lineage_poc_auto_discovery"
 }
 
 variable "bucket_lineage_api_suffix" {
   type    = string
-  default = "wpp_lineage_poc_lineage_api"
+  default = "demo_lineage_poc_lineage_api"
 }
 
 variable "bucket_bq_native_suffix" {
   type    = string
-  default = "wpp_lineage_poc_bq_native"
+  default = "demo_lineage_poc_bq_native"
 }

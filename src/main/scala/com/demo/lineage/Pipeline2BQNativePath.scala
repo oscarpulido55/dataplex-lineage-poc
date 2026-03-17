@@ -1,4 +1,4 @@
-package com.wpp.lineage
+package com.demo.lineage
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
@@ -21,7 +21,7 @@ object Pipeline2BQNativePath {
     println("Pipeline 2: Starting BQ to BQ external tables direct Native interaction...")
 
     // 2. Read using the BigQuery Spark Connector. 
-    val sourceTable = s"$projectId.wpp_lineage_poc_bq_native.native_bq_tables_source"
+    val sourceTable = s"$projectId.demo_lineage_poc_bq_native.native_bq_tables_source"
     println(s"Reading data from: $sourceTable")
     val df = spark.read.format("bigquery")
       .load(sourceTable)
@@ -34,7 +34,7 @@ object Pipeline2BQNativePath {
 
     // 4. Write back directly to the GCS path acting as the External Table Destination.
     // The BigQuery Connector API does not support writing to External Tables.
-    val destPath = s"gs://$projectId-wpp_lineage_poc_bq_native/dest/"
+    val destPath = s"gs://$projectId-demo_lineage_poc_bq_native/dest/"
     println(s"Writing data to GCS: $destPath")
     
     transformedDf.write

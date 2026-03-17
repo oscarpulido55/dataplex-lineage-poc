@@ -1,8 +1,8 @@
 #!/bin/bash
-PROJECT="YOUR_PROJECT_ID"
+PROJECT="wf-prod-466816"
 LOCATION="us-east1"
-ENTRY_GROUP="wpp-lineage-poc-lineage-api-group"
-ENTRY_TYPE="projects/YOUR_PROJECT_NUMBER/locations/us-east1/entryTypes/wpp-lineage-poc-custom-type"
+ENTRY_GROUP="demo-lineage-poc-lineage-api-group"
+ENTRY_TYPE="projects/1071462678170/locations/us-east1/entryTypes/demo-lineage-poc-custom-type"
 
 TOKEN=$(gcloud auth print-access-token)
 

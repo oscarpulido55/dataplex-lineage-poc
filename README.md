@@ -1,4 +1,4 @@
-# WPP Dataplex Lineage POC
+# Demo Dataplex Lineage POC
 
 This project implements three distinct mechanisms for orchestrating Data Lineage on Google Cloud Dataproc Serverless, integrated directly with the Dataplex Universal Catalog.
 
@@ -22,11 +22,11 @@ Before running the pipelines, export your target infrastructure settings:
 export PROJECT_ID="<YOUR_PROJECT_ID_HERE>"
 export REGION="<YOUR_REGION_HERE>"
 export SUBNET="<YOUR_SUBNET_HERE>"
-export BUCKET_MAIN="${PROJECT_ID}-wpp_lineage_poc"
-export BUCKET_BQ="${PROJECT_ID}-wpp_lineage_poc_bq_external"
-export BUCKET_DISCOVERY="${PROJECT_ID}-wpp_lineage_poc_auto_discovery"
-export BUCKET_API="${PROJECT_ID}-wpp_lineage_poc_lineage_api"
-export BUCKET_NAT="${PROJECT_ID}-wpp_lineage_poc_bq_native"
+export BUCKET_MAIN="${PROJECT_ID}-demo_lineage_poc"
+export BUCKET_BQ="${PROJECT_ID}-demo_lineage_poc_bq_external"
+export BUCKET_DISCOVERY="${PROJECT_ID}-demo_lineage_poc_auto_discovery"
+export BUCKET_API="${PROJECT_ID}-demo_lineage_poc_lineage_api"
+export BUCKET_NAT="${PROJECT_ID}-demo_lineage_poc_bq_native"
 ```
 
 ## Compiling the Spark Job
@@ -87,7 +87,7 @@ gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
     --batch=lineage-direct-gcs \
-    --class=com.wpp.lineage.Pipeline1DirectGcsRead \
+    --class=com.demo.lineage.Pipeline1DirectGcsRead \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
     --properties="spark.dataproc.lineage.enabled=true" \
@@ -98,7 +98,7 @@ gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
     --batch=lineage-biglake-connector \
-    --class=com.wpp.lineage.Pipeline2BQNativePath \
+    --class=com.demo.lineage.Pipeline2BQNativePath \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
     --properties="spark.dataproc.lineage.enabled=true" \
@@ -109,7 +109,7 @@ gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
     --batch=lineage-native-dataplex \
-    --class=com.wpp.lineage.Pipeline3NativeDataplex \
+    --class=com.demo.lineage.Pipeline3NativeDataplex \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
     --properties="spark.dataproc.lineage.enabled=true" \
@@ -120,7 +120,7 @@ gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
     --batch=lineage-custom-api \
-    --class=com.wpp.lineage.Pipeline4CustomLineage \
+    --class=com.demo.lineage.Pipeline4CustomLineage \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
     -- $BUCKET_API

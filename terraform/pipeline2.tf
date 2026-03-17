@@ -2,14 +2,14 @@
 # Requires BigQuery Storage API Read integration over a BigLake connection.
 
 resource "google_bigquery_dataset" "pipeline2_dataset" {
-  dataset_id    = "wpp_lineage_poc_bq_native"
+  dataset_id    = "demo_lineage_poc_bq_native"
   friendly_name = "Lineage POC BQ Native Connector"
   description   = "Dataset for Pipeline 2 (BigQuery Storage API Reads over BigLake)"
   location      = var.region
 }
 
 resource "google_bigquery_connection" "bq_native_biglake_conn" {
-  connection_id = "wpp-lineage-poc-biglake-conn"
+  connection_id = "demo-lineage-poc-biglake-conn"
   project       = var.project_id
   location      = var.region
   friendly_name = "BigLake Connection for Native Lineage"

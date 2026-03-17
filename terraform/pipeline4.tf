@@ -1,7 +1,7 @@
 resource "google_dataplex_entry_group" "pipeline4_entry_group" {
   project        = var.project_id
   location       = var.region
-  entry_group_id = "wpp-lineage-poc-lineage-api-group"
+  entry_group_id = "demo-lineage-poc-lineage-api-group"
 
   description  = "Entry Group anchoring the Custom Pipeline 4 OpenLineage graphs"
   display_name = "Pipeline 4 Custom Native Lineage"
@@ -10,7 +10,7 @@ resource "google_dataplex_entry_group" "pipeline4_entry_group" {
 resource "google_dataplex_entry_type" "pipeline4_entry_type" {
   project       = var.project_id
   location      = var.region
-  entry_type_id = "wpp-lineage-poc-custom-type"
+  entry_type_id = "demo-lineage-poc-custom-type"
 
   description  = "Custom Entry Type to allow Spark job to manually mint assets"
   display_name = "Custom FileSet"
@@ -23,10 +23,10 @@ resource "google_dataplex_entry_type" "pipeline4_entry_type" {
 resource "google_dataplex_aspect_type" "pipeline4_custom_aspect" {
   project        = var.project_id
   location       = var.region
-  aspect_type_id = "wpp-lineage-poc-custom-aspect"
+  aspect_type_id = "demo-lineage-poc-custom-aspect"
 
   description  = "Custom Aspect for Lineage POC storing file format and framework metadata"
-  display_name = "WPP Lineage POC Custom Aspect"
+  display_name = "Demo Lineage POC Custom Aspect"
 
   metadata_template   = <<EOF
 {
