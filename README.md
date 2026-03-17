@@ -7,7 +7,8 @@ GCP Infrastructure is fully managed via Terraform:
 ```bash
 cd terraform
 terraform init
-terraform apply
+terraform plan -var="project_id=<YOUR_PROJECT_ID_HERE>"
+terraform apply -var="project_id=<YOUR_PROJECT_ID_HERE>"
 ```
 This provisions:
 - BigQuery Datasets & External Tables (For Pipeline 1)
