@@ -11,7 +11,7 @@ object Pipeline4CustomLineage {
     }
 
     val bucketApiLineage = args(0)
-    val projectId = sys.env.getOrElse("GOOGLE_CLOUD_PROJECT", "wf-prod-466816")
+    val projectId = sys.env.getOrElse("GOOGLE_CLOUD_PROJECT", "<YOUR_PROJECT_ID_HERE>")
     val location = "us-east1"
 
     // 1. Define Paths

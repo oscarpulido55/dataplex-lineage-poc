@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline 5 V2 - Lineage Visualization</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #0f172a;
+            margin-bottom: 10px;
+        }
+        
+        p.subtitle {
+            color: #64748b;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .mermaid-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            width: 100%;
+            height: 65vh;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #mermaid-output {
+            width: 100%;
+            height: 100%;
+        }
+
+        .legend {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+            background-color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .dot.gcs { background-color: #ffe4e6; }
+        .dot.bq { background-color: #e0e7ff; }
+        .dot.col { background-color: #dcfce7; }
+    </style>
+    <!-- Load svg-pan-zoom -->
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            flowchart: { curve: 'basis' }
+        });
+
+        window.onload = async () => {
+            const graphDefinition = document.getElementById('mermaid-code').textContent;
+            const { svg } = await mermaid.render('mermaid-svg', graphDefinition);
+            document.getElementById('mermaid-output').innerHTML = svg;
+            
+            const svgElement = document.getElementById('mermaid-svg');
+            svgElement.style.width = "100%";
+            svgElement.style.maxWidth = "100%";
+            svgElement.style.height = "100%";
+            
+            svgPanZoom(svgElement, {
+                zoomEnabled: true,
+                controlIconsEnabled: true,
+                fit: true,
+                center: true,
+                minZoom: 0.1,
+                maxZoom: 10
+            });
+        };
+    </script>
+</head>
+<body>
+
+    <h1>Pipeline 5 V2 </h1>
+    <p class="subtitle">Custom BigLake Rest Catalog Lineage<br>Demonstrating Table-Level and Column-Level Lineage tracking.</p>
+
+    <div class="mermaid-container">
+        <div id="mermaid-output"></div>
+    </div>
+    <div id="mermaid-code" style="display: none;">
+%%{init: {'theme': 'default', 'themeVariables': { 'fontFamily': 'Inter' }}}%%
+graph LR
+    %% Data Sources
+    subgraph GCS [Google Cloud Storage]
+        direction TB
+        GCS_Bucket["gs://<your_project_id>-demo_lineage_poc_blms_data_v2/source"]
+    end
+
+    %% Step 1
+    subgraph Step1 [BigQuery: pipeline5_step1_v2]
+        direction TB
+        T1["Table"]
+        C1(["Column: pipeline_id"])
+    end
+
+    %% Step 2
+    subgraph Step2 [BigQuery: pipeline5_step2_v2]
+        direction TB
+        T2["Table"]
+        C2(["Column: processing_step"])
+    end
+
+    %% Table Level Lineage Mappings
+    GCS_Bucket ==>|Table Lineage| T1
+    T1 ==>|Table Lineage| T2
+
+    %% Column Level Lineage Mappings
+    C1 -.->|Column Lineage| C2
+
+    %% Styling
+    classDef gcs fill:#ffe4e6,stroke:#be123c,stroke-width:2px,color:#881337
+    classDef bq fill:#e0e7ff,stroke:#4338ca,stroke-width:2px,color:#312e81
+    classDef col fill:#dcfce7,stroke:#15803d,stroke-width:2px,color:#14532d,stroke-dasharray: 5 5
+
+    class GCS_Bucket gcs
+    class T1,T2 bq
+    class C1,C2 col
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="dot gcs"></div> GCS Source</div>
+        <div class="legend-item"><div class="dot bq"></div> BigQuery Table</div>
+        <div class="legend-item"><div class="dot col"></div> Column Mapping</div>
+    </div>
+
+</body>
+</html>

@@ -23,17 +23,17 @@ export PROJECT_ID="<YOUR_PROJECT_ID_HERE>"
 export REGION="<YOUR_REGION_HERE>"
 export SUBNET="<YOUR_SUBNET_HERE>"
 export BUCKET_MAIN="${PROJECT_ID}-demo_lineage_poc"
-export BUCKET_BQ="${PROJECT_ID}-demo_lineage_poc_bq_external"
+export BUCKET_DIRECT_GCS="${PROJECT_ID}-demo_lineage_poc_direct_gcs"
 export BUCKET_DISCOVERY="${PROJECT_ID}-demo_lineage_poc_auto_discovery"
 export BUCKET_API="${PROJECT_ID}-demo_lineage_poc_lineage_api"
-export BUCKET_NAT="${PROJECT_ID}-demo_lineage_poc_bq_native"
+export BUCKET_BQ_EXTERNAL="${PROJECT_ID}-demo_lineage_poc_bq_external"
 ```
 
 ## Compiling the Spark Job
 Because Dataproc natively bundles `protobuf`, `grpc`, and the Spark BigQuery connector, we mark these dependencies as `% "provided"` to prevent JVM "Classpath Hell".
 ```bash
 sbt clean assembly
-gcloud storage cp target/scala-2.12/lineage-poc-assembly-1.0.jar gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar --project=$PROJECT_ID
+gcloud storage cp target/scala-2.13/lineage-poc-assembly-1.0.jar gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar --project=$PROJECT_ID
 ```
 
 ## Running the Pipelines
@@ -42,6 +42,18 @@ gcloud storage cp target/scala-2.12/lineage-poc-assembly-1.0.jar gs://$BUCKET_MA
 All pipelines utilize Dataproc Serverless to stitch Spark operations into the Dataplex Universal Catalog.
 
 ### Key Architectural Findings & Column-Level Lineage
+
+#### 0. Pipeline 0: Pure BQ-to-BQ Native
+* **Prerequisites**: A native BigQuery dataset with a native table populated with data,. No GCS interactions in Spark code.
+* **Compute Engine**: **Shared (BigQuery + Dataproc)**. The `spark-bigquery` connector utilizes the BigQuery Storage Read/Write API.
+* **Column-Level Lineage**: **Supported**. Standard BigQuery Storage API read hooks natively broadcast the exact schemas and Table FQNs directly to OpenLineage for both reading and writing.
+* **Pros**: Operates strictly within the native GCP BigQuery execution framework, providing full table and column-level lineage visibility.
+* **Cons**: Incurs BigQuery API costs.
+* **Validation**:
+  ```bash
+  export PROJECT_ID="<YOUR_PROJECT_ID_HERE>"
+  python inspect_batch_lineage.py lineage-pipeline0-native
+  ```
 
 #### 1. Pipeline 1: Pure GCS-to-GCS (Direct File Operations)
 * **Prerequisites**: Just standard Google Cloud Storage Bucket(s). No BigQuery external tables are utilized or needed here.
@@ -79,51 +91,129 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 * **Pros**: Absolute control. Enforces 1:1 lineage linking via explicit FQNs (`custom:namespace.target`). Impossible to produce "ghost nodes". Supports custom metadata "Aspects" natively.
 * **Cons**: High engineering cost. Requires managing custom API integration within the Spark application code. No native column-level graph.
 
+#### 5. Pipeline 5 V2: Iceberg BigLake REST Catalog (Custom API Injection)
+* **Prerequisites**: A functional Iceberg BigLake REST Catalog integration (`bq://` federation).
+* **Column-Level Lineage**: **Supported (via Custom API)**. Because native OpenLineage drops OSS DML write events for unified Iceberg tables (see limitations below), this pipeline explicitly calls the `datalineage.googleapis.com` REST API natively within the Spark application to emit both table-level tracking *and* explicit column-level lineage mappings (e.g., `pipeline_id` -> `processing_step`).
+* **Pros**: Overcomes native limitations of OpenLineage on Iceberg. Produces a pristine `bigquery:` FQN graph identical to Pipeline 0 within the Dataplex UI, fully validating that we can coerce unified column-level tracking natively.
+* **Cons**: Requires manual backend REST manipulation for lineage emission within the core transformation logic.
+
+## Known Limitations: Iceberg BigLake REST Catalog Lineage
+
+During the investigation of **Pipeline 5** (a unified BigLake REST Catalog integration mimicking exact user behavior), we discovered native limitations regarding Dataproc OpenLineage and BigLake Metastore Federation (`bq://` URIs).
+
+As outlined in the Google Cloud PRD for "Unified BigLake Iceberg Tables," **lineage for OSS DML (e.g., Spark writes to Unified Iceberg Tables) is currently out of scope**. This manifests technically as follows:
+- When writing to Iceberg using the BigLake REST Catalog configured with BigQuery Federation (e.g. `warehouse=bq://projects/...`), omitting the catalog name in Spark SQL causes OpenLineage to intercept the logical `bq://` warehouse path.
+- The Dataplex Lineage API does not support `bq://` as a schema and crashes with an `INVALID_ARGUMENT: Unrecognized input` GRPC error, completely **dropping the write event**.
+- Consequently, the lineage graph fails to render target nodes for these writes organically.
+
+**Solution**: For strict logical `bigquery:` FQN lineage representation on unsupported OSS engines, users must manually self-report lineage graphs via the Lineage REST API (implemented successfully in **Pipeline 5 V2**). This provides complete, uncompromising table and column-level control.
+
 ### Execution Commands
 
 ```bash
+# Pipeline 0: Pure BigQuery Native
+gcloud dataproc batches submit spark \
+    --project=$PROJECT_ID \
+    --region=$REGION \
+    --batch=lineage-pipeline0-native-$RANDOM \
+    --version=3.0 \
+    --class=com.demo.lineage.Pipeline0BQNative \
+    --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
+    --subnet=$SUBNET \
+    --properties="spark.dataproc.lineage.enabled=true" \
+    -- $PROJECT_ID
+
+# Inspect Pipeline 0
+python3 inspect_batch_lineage.py lineage-pipeline0-native-21793
+
 # Pipeline 1: BQ External Tables (Direct GCS Read)
 gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
     --batch=lineage-direct-gcs-$RANDOM \
+    --version=3.0 \
     --class=com.demo.lineage.Pipeline1DirectGcsRead \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
     --properties="spark.dataproc.lineage.enabled=true" \
-    -- $PROJECT_ID $BUCKET_BQ
+    -- $PROJECT_ID $BUCKET_DIRECT_GCS
 
-# Pipeline 2: BigQuery Connector via BigLake
+# Inspect Pipeline 1
+python3 inspect_batch_lineage.py lineage-direct-gcs-28489
+
+# Pipeline 2: BigQuery Connector via BigLake (External Tables)
 gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
     --batch=lineage-biglake-connector-$RANDOM \
-    --class=com.demo.lineage.Pipeline2BQNativePath \
+    --version=3.0 \
+    --class=com.demo.lineage.Pipeline2BQExternal \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
     --properties="spark.dataproc.lineage.enabled=true" \
-    -- $PROJECT_ID $BUCKET_NAT
+    -- $PROJECT_ID $BUCKET_BQ_EXTERNAL
+
+# Inspect Pipeline 2
+python3 inspect_batch_lineage.py lineage-biglake-connector-11705
 
 # Pipeline 3: Native Dataplex Path
 gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
     --batch=lineage-native-dataplex-$RANDOM \
+    --version=3.0 \
     --class=com.demo.lineage.Pipeline3NativeDataplex \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
     --subnet=$SUBNET \
     --properties="spark.dataproc.lineage.enabled=true" \
     -- $PROJECT_ID $BUCKET_DISCOVERY
 
+# Inspect Pipeline 3
+python3 inspect_batch_lineage.py lineage-native-dataplex-12098
+
 # Pipeline 4: Custom REST API Lineage
 gcloud dataproc batches submit spark \
     --project=$PROJECT_ID \
     --region=$REGION \
     --batch=lineage-custom-api-$RANDOM \
+    --version=3.0 \
     --class=com.demo.lineage.Pipeline4CustomLineage \
     --jars=gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar \
-    --subnet=$SUBNET \
     -- $BUCKET_API
+
+# Inspect Pipeline 4
+python3 inspect_batch_lineage.py job_pipeline_4
+
+# Pipeline 5 V2: Custom BigLake Rest Catalog Lineage Injection
+CATALOG_NAME_V2="${PROJECT_ID}_demo_lineage_poc_blms_catalog_v2"
+
+gcloud dataproc batches submit spark \
+    --project=$PROJECT_ID \
+    --region=$REGION \
+    --batch="lineage-blms-custom-$RANDOM" \
+    --version=3.0 \
+    --class=com.demo.lineage.Pipeline5CustomBigLake \
+    --jars="gs://${PROJECT_ID}-demo_lineage_poc/jars/lineage-poc-assembly-1.0.jar" \
+    --subnet=$SUBNET \
+    --properties="spark.sql.defaultCatalog=$CATALOG_NAME_V2,\
+spark.sql.catalog.$CATALOG_NAME_V2=org.apache.iceberg.spark.SparkCatalog,\
+spark.sql.catalog.$CATALOG_NAME_V2.type=rest,\
+spark.sql.catalog.$CATALOG_NAME_V2.uri=https://biglake.googleapis.com/iceberg/v1/restcatalog,\
+spark.sql.catalog.$CATALOG_NAME_V2.warehouse=bq://projects/${PROJECT_ID},\
+spark.sql.catalog.$CATALOG_NAME_V2.io-impl=org.apache.iceberg.gcp.gcs.GCSFileIO,\
+spark.sql.catalog.$CATALOG_NAME_V2.header.x-goog-user-project=${PROJECT_ID},\
+spark.sql.catalog.$CATALOG_NAME_V2.rest.auth.type=org.apache.iceberg.gcp.auth.GoogleAuthManager,\
+spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,\
+spark.sql.catalog.$CATALOG_NAME_V2.rest-metrics-reporting-enabled=false" \
+    -- $PROJECT_ID "${PROJECT_ID}-demo_lineage_poc_blms_data_v2" "$CATALOG_NAME_V2" "$REGION"
+```
+
+### Inspecting Pipeline 5 V2 Lineage
+
+Because Pipeline 5 overrides the default Dataproc batch UUID with a permanent `custom_job_id` to prevent history fragmentation, you must query the inspection script using this explicit name:
+```bash
+export PROJECT_ID="<YOUR_PROJECT_ID_HERE>"
+python3 inspect_batch_lineage.py pipeline5_v2
 ```
 
 ## Cleaning Up Persistent Lineage

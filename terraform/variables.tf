@@ -16,9 +16,9 @@ variable "bucket_main_suffix" {
   default = "demo_lineage_poc"
 }
 
-variable "bucket_bq_external_suffix" {
+variable "bucket_direct_gcs_suffix" {
   type    = string
-  default = "demo_lineage_poc_bq_external"
+  default = "demo_lineage_poc_direct_gcs"
 }
 
 variable "bucket_auto_discovery_suffix" {
@@ -31,7 +31,17 @@ variable "bucket_lineage_api_suffix" {
   default = "demo_lineage_poc_lineage_api"
 }
 
-variable "bucket_bq_native_suffix" {
+variable "bucket_bq_external_suffix" {
   type    = string
-  default = "demo_lineage_poc_bq_native"
+  default = "demo_lineage_poc_bq_external"
+}
+
+variable "bucket_blms_data_suffix_v2" {
+  type    = string
+  default = "demo_lineage_poc_blms_data_v2"
+}
+
+variable "bucket_blms_catalog_suffix_v2" {
+  type    = string
+  default = "demo_lineage_poc_blms_catalog_v2"
 }

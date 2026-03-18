@@ -90,7 +90,7 @@ def get_runs_and_events(process_name, token):
     return all_events
 
 def fqn_to_gcs_path(fqn):
-    # Convert gcs:wf-prod-466816-demo_lineage_poc_bq_external.source to gs://wf-prod-466816-demo_lineage_poc_bq_external/source
+    # Convert gcs:your-project-id-demo_lineage_poc_direct_gcs.source to gs://your-project-id-demo_lineage_poc_direct_gcs/source
     if fqn.startswith("gcs:"):
         parts = fqn[4:].split(".", 1)
         if len(parts) == 2:

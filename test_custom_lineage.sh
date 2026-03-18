@@ -1,5 +1,6 @@
 #!/bin/bash
-PROJECT="wf-prod-466816"
+# Hardcoded variables for the test
+PROJECT="<YOUR_PROJECT_ID_HERE>"
 LOCATION="us-east1"
 ENTRY_GROUP="demo-lineage-poc-lineage-api-group"
 ENTRY_TYPE="projects/1071462678170/locations/us-east1/entryTypes/demo-lineage-poc-custom-type"

@@ -37,5 +37,8 @@ resource "google_dataplex_asset" "custom_catalog_asset" {
     type = "STORAGE_BUCKET"
   }
 
-  depends_on = [google_storage_bucket_object.auto_discovery_source]
+  depends_on = [
+    google_storage_bucket_object.auto_discovery_source,
+    google_storage_bucket_object.auto_discovery_dest_dummy
+  ]
 }
