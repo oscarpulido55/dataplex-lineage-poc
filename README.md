@@ -82,7 +82,7 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 * **Cons**:   
   * Potential timing issues if Spark runs before the Dataplex Discovery Scan (usually 1-hour intervals) registers the new data entry.
   * **Upgrade to Managed Limitations (No BigQuery Graph)**: Even if the tables are explicitly "upgraded to managed" within Dataplex, Dataproc OpenLineage's native integration points to the `gcs:` storage FQN (e.g., `gcs:bucket.dest`). The Lineage UI expects the `bigquery:` FQN. Because the backend does not automatically stitch `gcs:` events to `bigquery:` external tables, the visual graph in BigQuery stays empty. 
-  * **Note on Pipeline 2 vs 3 Similarity**: Notice that if we had written Pipeline 3 using the `spark-bigquery` connector (exactly like Pipeline 2), the lineage *would* render in the UI. The only difference between those two scenarios is how the table definition was created (Terraform BigLake manual creation vs. Dataplex Auto-Discovery "Upgrade to Managed"). If you use the connector, OpenLineage emits the `bigquery:` FQN, which renders nicely. We deliberately wrote Pipeline 3 exactly like Pipeline 1 (using direct `gcs:` reads) to show that Pipeline 1-style purely-storage lineage fails to map to Native Dataplex entities out of the box.
+  * **Note on Pipeline 2 vs 3 Similarity**: If the `spark-bigquery` connector is used (as in Pipeline 2), OpenLineage emits the `bigquery:` FQN which renders in the UI. Using direct `gcs:` reads (as in Pipeline 1 and 3) fails to map to Native Dataplex entities out of the box, even if the destination is later manually or automatically "upgraded to managed" via Dataplex Auto-Discovery.
 
 #### 4. Pipeline 4: Custom REST API
 * **Prerequisites**: `google_dataplex_entry_group`, `google_dataplex_entry_type`, `google_dataplex_aspect_type`
@@ -99,7 +99,7 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 
 ## Known Limitations: Iceberg BigLake REST Catalog Lineage
 
-During the investigation of **Pipeline 5** (a unified BigLake REST Catalog integration mimicking exact user behavior), we discovered native limitations regarding Dataproc OpenLineage and BigLake Metastore Federation (`bq://` URIs).
+Pipeline 5 outlines a unified BigLake REST Catalog integration. It highlights native limitations regarding Dataproc OpenLineage and BigLake Metastore Federation (`bq://` URIs).
 
 As outlined in the Google Cloud PRD for "Unified BigLake Iceberg Tables," **lineage for OSS DML (e.g., Spark writes to Unified Iceberg Tables) is currently out of scope**. This manifests technically as follows:
 - When writing to Iceberg using the BigLake REST Catalog configured with BigQuery Federation (e.g. `warehouse=bq://projects/...`), omitting the catalog name in Spark SQL causes OpenLineage to intercept the logical `bq://` warehouse path.
@@ -210,7 +210,7 @@ spark.sql.catalog.$CATALOG_NAME_V2.rest-metrics-reporting-enabled=false" \
 
 ### Inspecting Pipeline 5 V2 Lineage
 
-Because Pipeline 5 overrides the default Dataproc batch UUID with a permanent `custom_job_id` to prevent history fragmentation, you must query the inspection script using this explicit name:
+Because Pipeline 5 overrides the default Dataproc batch UUID with a permanent `custom_job_id` to prevent history fragmentation, the inspection script must be queried using this explicit name:
 ```bash
 export PROJECT_ID="<YOUR_PROJECT_ID_HERE>"
 python3 inspect_batch_lineage.py pipeline5_v2
