@@ -30,7 +30,7 @@ export BUCKET_BQ_EXTERNAL="${PROJECT_ID}-demo_lineage_poc_bq_external"
 ```
 
 ## Compiling the Spark Job
-Because Dataproc natively bundles `protobuf`, `grpc`, and the Spark BigQuery connector, we mark these dependencies as `% "provided"` to prevent JVM "Classpath Hell".
+Because Dataproc natively bundles `protobuf`, `grpc`, and the Spark BigQuery connector, these dependencies are marked as `% "provided"` to prevent JVM "Classpath Hell".
 ```bash
 sbt clean assembly
 gcloud storage cp target/scala-2.13/lineage-poc-assembly-1.0.jar gs://$BUCKET_MAIN/jars/lineage-poc-assembly-1.0.jar --project=$PROJECT_ID
@@ -86,7 +86,7 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 
 #### 4. Pipeline 4: Custom REST API
 * **Prerequisites**: `google_dataplex_entry_group`, `google_dataplex_entry_type`, `google_dataplex_aspect_type`
-  * **Why is an Entry Group required?**: Because we are bypassing the Auto-Discovery `Lake/Zone` hierarchy, we must explicitly provision a purely logical `Entry Group` to serve as the structural anchor for our manually minted `custom` Lineage Entries and their `Entry/Aspect Types`.
+  * **Why is an Entry Group required?**: Because the Auto-Discovery `Lake/Zone` hierarchy is bypassed, a purely logical `Entry Group` must be explicitly provisioned to serve as the structural anchor for manually minted `custom` Lineage Entries and their `Entry/Aspect Types`.
 * **Column-Level Lineage**: **Not Supported**. The `custom:` FQN format currently maps to standard entity definitions. While custom aspects can hold arbitrary schema text, native Lineage UI visualization for columns relies on Google-managed BigQuery/Dataplex Discovery entities.
 * **Pros**: Absolute control. Enforces 1:1 lineage linking via explicit FQNs (`custom:namespace.target`). Impossible to produce "ghost nodes". Supports custom metadata "Aspects" natively.
 * **Cons**: High engineering cost. Requires managing custom API integration within the Spark application code. No native column-level graph.
@@ -94,7 +94,7 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 #### 5. Pipeline 5 V2: Iceberg BigLake REST Catalog (Custom API Injection)
 * **Prerequisites**: A functional Iceberg BigLake REST Catalog integration (`bq://` federation).
 * **Column-Level Lineage**: **Supported (via Custom API)**. Because native OpenLineage drops OSS DML write events for unified Iceberg tables (see limitations below), this pipeline explicitly calls the `datalineage.googleapis.com` REST API natively within the Spark application to emit both table-level tracking *and* explicit column-level lineage mappings (e.g., `pipeline_id` -> `processing_step`).
-* **Pros**: Overcomes native limitations of OpenLineage on Iceberg. Produces a pristine `bigquery:` FQN graph identical to Pipeline 0 within the Dataplex UI, fully validating that we can coerce unified column-level tracking natively.
+* **Pros**: Overcomes native limitations of OpenLineage on Iceberg. Produces a pristine `bigquery:` FQN graph identical to Pipeline 0 within the Dataplex UI, fully validating that unified column-level tracking can be coerced natively.
 * **Cons**: Requires manual backend REST manipulation for lineage emission within the core transformation logic.
 
 ## Known Limitations: Iceberg BigLake REST Catalog Lineage

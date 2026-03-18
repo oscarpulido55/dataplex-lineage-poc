@@ -13,7 +13,7 @@ resource "google_bigquery_table" "pipeline0_source" {
   table_id            = "pure_native_source"
   deletion_protection = false
 
-  # We don't define a strict schema here because the load job with autodetect will infer it
+  # A strict schema is not defined here because the load job with autodetect will infer it
   # from the parquet file.
 }
 

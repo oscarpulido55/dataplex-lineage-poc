@@ -115,6 +115,6 @@ resource "google_storage_bucket_object" "blms_data_source" {
 # Upload dummy dest data to the BLMS Data bucket
 resource "google_storage_bucket_object" "blms_data_dest_dummy" {
   name   = "dest/dummy.parquet"
-  source = "../data_gen/dummy_dest.parquet"       # We use this just to create the target folder structure
+  source = "../data_gen/dummy_dest.parquet"       # This is used just to create the target folder structure
   bucket = google_storage_bucket.blms_data_v2.name
 }
