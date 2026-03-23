@@ -99,7 +99,7 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 
 #### 6. Pipeline 6: Dataproc Serverless Lineage Uniqueness Proof
 * **Prerequisites**: A functional base dataset and table created via `terraform/pipeline6.tf`.
-* **Objective**: Decisively prove what makes a Dataplex Lineage Process "unique" when executing Serverless Spark jobs. The official Dataproc Clusters documentation specifies that the optional properties `spark.openlineage.namespace` (defaults to `PROJECT_ID`) and `spark.openlineage.appName` (defaults to `spark.app.name`) uniquely identify the job. Dataproc Serverless documentation omits this.
+* **Objective**: Prove what makes a Dataplex Lineage Process "unique" when executing Serverless Spark jobs. The  [Dataproc Clusters](https://docs.cloud.google.com/dataproc/docs/guides/spark-lineage#submit-job) documentation specifies that the optional properties `spark.openlineage.namespace` (defaults to `PROJECT_ID`) and `spark.openlineage.appName` (defaults to `spark.app.name`) uniquely identify the job. Dataproc Serverless documentation omits this.
 * **The Serverless Uniqueness Rule**: The test demonstrates that Dataproc Serverless uses same Uniqueness rules as Dataproc Clusters:
   1. The ephemeral Serverless Batch UUID (`gcp_dataproc.batchUuid`) **is not used** by OpenLineage for identity tracking. Multiple distinct Serverless executions will safely consolidate under a single unified Process node and act as distinct Runs if their `appName` matches.
   2. Overwriting the `--properties="spark.openlineage.appName=NewName"` forcibly breaks process identity, spawning a brand new Process node.
