@@ -100,10 +100,11 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 #### 6. Pipeline 6: Dataproc Serverless Lineage Uniqueness Proof
 * **Prerequisites**: A functional base dataset and table created via `terraform/pipeline6.tf`.
 * **Objective**: Prove what makes a Dataplex Lineage Process "unique" when executing Serverless Spark jobs. The  [Dataproc Clusters](https://docs.cloud.google.com/dataproc/docs/guides/spark-lineage#submit-job) documentation specifies that the optional properties `spark.openlineage.namespace` (defaults to `PROJECT_ID`) and `spark.openlineage.appName` (defaults to `spark.app.name`) uniquely identify the job. Dataproc Serverless documentation omits this.
-* **The Serverless Uniqueness Rule**: The test demonstrates that Dataproc Serverless uses same Uniqueness rules as Dataproc Clusters:
-  1. The ephemeral Serverless Batch UUID (`gcp_dataproc.batchUuid`) **is not used** by OpenLineage for identity tracking. Multiple distinct Serverless executions will safely consolidate under a single unified Process node and act as distinct Runs if their `appName` matches.
-  2. Overwriting the `--properties="spark.openlineage.appName=NewName"` forcibly breaks process identity, spawning a brand new Process node.
-  3. Dataproc Serverless honors explicitly passed `--properties="spark.openlineage.namespace=custom_namespace"` variables out of the box.
+* **The Serverless Uniqueness Rule**: The test demonstrates that Dataproc Serverless processes identity strictly using `appName` and `namespace`, but with a **critical difference in default values** compared to clusters:
+  1. **Serverless Default Namespace**: Unlike Dataproc Clusters (which default to `PROJECT_ID`), Dataproc Serverless OpenLineage assigns the namespace as `default` if omitted.
+  2. **Serverless Default AppName**: Dataproc Serverless defaults to `spark.app.name` if omitted.
+  3. **Batch ID is Ignored**: The ephemeral Serverless Batch UUID (`gcp_dataproc.batchUuid`) **is not used** for identity tracking.
+  4. **Overrides Work**: Overwriting `--properties="spark.openlineage.appName=NewName"` or `--properties="spark.openlineage.namespace=custom_namespace"` breaks process identity, giving full custom control.
 
 ## Known Limitations: Iceberg BigLake REST Catalog Lineage
 
