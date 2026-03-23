@@ -97,6 +97,14 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 * **Pros**: Overcomes native limitations of OpenLineage on Iceberg. Produces a pristine `bigquery:` FQN graph identical to Pipeline 0 within the Dataplex UI, fully validating that unified column-level tracking can be coerced natively.
 * **Cons**: Requires manual backend REST manipulation for lineage emission within the core transformation logic.
 
+#### 6. Pipeline 6: Dataproc Serverless Lineage Uniqueness Proof
+* **Prerequisites**: A functional base dataset and table created via `terraform/pipeline6.tf`.
+* **Objective**: Decisively prove what makes a Dataplex Lineage Process "unique" when executing Serverless Spark jobs. The official Dataproc Clusters documentation specifies that the `spark.openlineage.namespace` and `spark.app.name` properties uniquely identify the job. Dataproc Serverless documentation omits this.
+* **The Serverless Uniqueness Rule**: The test demonstrates that Dataproc Serverless uses same Uniqueness rules as Dataproc Clusters:
+  1. The ephemeral Serverless Batch UUID (`gcp_dataproc.batchUuid`) **is not used** by OpenLineage for identity tracking. Multiple distinct Serverless executions will safely consolidate under a single unified Process node and act as distinct Runs if their `appName` matches.
+  2. Overwriting the `--properties="spark.openlineage.appName=NewName"` forcibly breaks process identity, spawning a brand new Process node.
+  3. Dataproc Serverless honors explicitly passed `--properties="spark.openlineage.namespace=custom_namespace"` variables out of the box.
+
 ## Known Limitations: Iceberg BigLake REST Catalog Lineage
 
 Pipeline 5 outlines a unified BigLake REST Catalog integration. It highlights native limitations regarding Dataproc OpenLineage and BigLake Metastore Federation (`bq://` URIs).
@@ -206,6 +214,17 @@ spark.sql.catalog.$CATALOG_NAME_V2.rest.auth.type=org.apache.iceberg.gcp.auth.Go
 spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,\
 spark.sql.catalog.$CATALOG_NAME_V2.rest-metrics-reporting-enabled=false" \
     -- $PROJECT_ID "${PROJECT_ID}-demo_lineage_poc_blms_data_v2" "$CATALOG_NAME_V2" "$REGION"
+```
+
+### Pipeline 6: Uniqueness Experiments (Automated Test Suite)
+This script submits 4 explicit Dataproc Serverless batches out-of-the-box to physically demonstrate process isolation & consolidation. Make sure you have recompiled the JAR and run `terraform apply` on pipeline 6 first.
+
+```bash
+chmod +x run_pipeline6_experiments.sh
+./run_pipeline6_experiments.sh
+
+# Inspect Pipeline 6
+python3 inspect_lineage_by_table.py bigquery:$PROJECT_ID.demo_lineage_poc_pipeline6_native.pipeline6_source
 ```
 
 ### Inspecting Pipeline 5 V2 Lineage
