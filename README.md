@@ -109,7 +109,7 @@ All pipelines utilize Dataproc Serverless to stitch Spark operations into the Da
 
 Pipeline 5 outlines a unified BigLake REST Catalog integration. It highlights native limitations regarding Dataproc OpenLineage and BigLake Metastore Federation (`bq://` URIs).
 
-As outlined in the Google Cloud PRD for "Unified BigLake Iceberg Tables," **lineage for OSS DML (e.g., Spark writes to Unified Iceberg Tables) is currently out of scope**. This manifests technically as follows:
+Currently, **native OpenLineage tracking for OSS DML (e.g., Spark writes to Unified Iceberg Tables) is not fully supported**. This manifests technically as follows:
 - When writing to Iceberg using the BigLake REST Catalog configured with BigQuery Federation (e.g. `warehouse=bq://projects/...`), omitting the catalog name in Spark SQL causes OpenLineage to intercept the logical `bq://` warehouse path.
 - The Dataplex Lineage API does not support `bq://` as a schema and crashes with an `INVALID_ARGUMENT: Unrecognized input` GRPC error, completely **dropping the write event**.
 - Consequently, the lineage graph fails to render target nodes for these writes organically.
